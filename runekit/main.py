@@ -48,6 +48,8 @@ def main(app_url, game_index, qt_args):
         game_manager = get_platform_manager()
         host = Host(game_manager)
 
+        logging.info("Using {} game manager".format(game_manager.type()))
+
         if app_url == "settings":
             host.open_settings()
             host.setting_dialog.setAttribute(Qt.WA_DeleteOnClose)

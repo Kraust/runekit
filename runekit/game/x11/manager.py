@@ -18,6 +18,7 @@ from ..overlay import DesktopWideOverlay
 MAX_SHM = 10
 NET_ACTIVE_WINDOW = "_NET_ACTIVE_WINDOW"
 WM_APP_NAME = os.getenv("RK_WM_APP_NAME", "RuneScape")
+WM_APP_NAME_STEAM = os.getenv("RK_WM_APP_NAME_STEAM", "steam_app_1343400")
 
 
 class X11GameManager(GameManager):
@@ -33,9 +34,11 @@ class X11GameManager(GameManager):
         self._atom = {}
         self._shm = []
 
-        self.logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
+        self.logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__)
         self.connection = xcffib.Connection()
-        self.screen = self.connection.get_screen_pointers()[self.connection.pref_screen]
+        self.screen = self.connection.get_screen_pointers()[
+            self.connection.pref_screen]
         self.xcomposite = self.connection(xcffib.composite.key)
         self.xshm = self.connection(xcffib.shm.key)
         self.xinput = self.connection(xcffib.xinput.key)
@@ -54,6 +57,9 @@ class X11GameManager(GameManager):
         self.event_thread.start()
 
         self.get_instances()
+
+    def type(self) -> str:
+        return "x11"
 
     def stop(self):
         self.event_thread.requestInterruption()
@@ -88,9 +94,11 @@ class X11GameManager(GameManager):
 
     def is_game(self, wid: int) -> bool:
         geom_req = self.connection.core.GetGeometry(wid)
+
         try:
             wm_class = self.get_property(wid, xcffib.xproto.Atom.WM_CLASS)
-        except xcffib.xproto.WindowError:
+        except xcffib.xproto.WindowError as e:
+            self.logger.info(e)
             geom_req.discard_reply()
             return False
 
@@ -103,13 +111,15 @@ class X11GameManager(GameManager):
             return False
 
         instance_name, app_name = wm_class.split("\00")
-        return app_name == WM_APP_NAME
+
+        return (app_name == WM_APP_NAME) or (app_name == WM_APP_NAME_STEAM)
 
     def get_active_window(self) -> int:
         return self.get_property(self.screen.root, "_NET_ACTIVE_WINDOW")
 
     def _setup_overlay(self):
         self.overlay = DesktopWideOverlay()
+        print(type(self.overlay))
         self.overlay.show()
         self.overlay.check_compatibility()
 
@@ -152,7 +162,8 @@ class X11GameManager(GameManager):
         if atom in self._atom:
             return self._atom[atom]
 
-        out = self.connection.core.InternAtom(False, len(atom), atom).reply().atom
+        out = self.connection.core.InternAtom(
+            False, len(atom), atom).reply().atom
         self._atom[atom] = out
 
         return out
@@ -182,7 +193,8 @@ class X11GameManager(GameManager):
     @Slot(xcffib.Event)
     def on_game_opened(self, evt: xcffib.xproto.CreateNotifyEvent):
         self.logger.info("New game window opened %d", evt.window)
-        self._instances[evt.window] = X11GameInstance(self, evt.window, parent=self)
+        self._instances[evt.window] = X11GameInstance(
+            self, evt.window, parent=self)
 
     @Slot(int)
     def on_game_closed(self, wid: int):
@@ -203,7 +215,8 @@ class X11EventWorker(QObject):
     def __init__(self, manager: "X11GameManager", **kwargs):
         super().__init__(**kwargs)
         self.manager = manager
-        self.logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
+        self.logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__)
 
         self.handlers = {
             xcffib.xproto.PropertyNotifyEvent: self.on_property_change,
@@ -271,7 +284,8 @@ class X11EventWorker(QObject):
         try:
             self.manager._instances[evt.event].input_signal.emit(evt)
         except KeyError:
-            self.logger.debug("Got input event for %d but is not registered", evt.event)
+            self.logger.debug(
+                "Got input event for %d but is not registered", evt.event)
 
     def on_configure_event(self, evt: xcffib.xproto.ConfigureNotifyEvent):
         try:

@@ -8,6 +8,11 @@ from .instance import GameInstance
 
 class GameManager(QObject):
     @abc.abstractmethod
+    def type(self) -> str:
+        """Return the GameManager type
+        """
+
+    @abc.abstractmethod
     def get_instances(self) -> List[GameInstance]:
         """Return a list of active game instance. The instances returned should be stable (same instance for all invocation)"""
         ...

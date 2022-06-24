@@ -64,6 +64,14 @@ To debug, go to `chrome://inspect` on Chrome/Chromium.
 3. Set codesign_identity in  RuneKit.spec or leave it None for ad-hoc sign
 5. `poetry run make dist/RuneKit.app.zip`
 
+## Docker Build
+
+```
+docker build . -t runekit
+docker run -v ${PWD}:/opt/runekit --device /dev/fuse --privileged -it runekit \
+    bash -c "cd /opt/runekit && rm -rf dist && poetry run make dist/RuneKit.AppImage"
+```
+
 ## License
 
 This project is [No Maintenance Intended](https://unmaintained.tech/).

@@ -70,6 +70,9 @@ class QuartzGameManager(GameManager):
         # Put some delay to allow it to initialize and not flash
         QTimer.singleShot(1000, start)
 
+    def type(self) -> str:
+        return "quartz"
+
     def stop(self):
         try:
             self.overlay.hide()

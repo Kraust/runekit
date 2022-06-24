@@ -1,4 +1,4 @@
-LINUXDEPLOY ?= linuxdeploy-$(shell uname -m).AppImage
+LINUXDEPLOY ?= build/linuxdeploy-$(shell uname -m).AppImage
 
 dev: runekit/_resources.py
 
@@ -25,16 +25,24 @@ dist/RuneKit.app.zip: dist/RuneKit.app
 
 # AppImage
 
+build/linuxdeploy-x86_64.AppImage:
+	mkdir build || true
+	chmod 777 build
+	wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-$(shell uname -m).AppImage -O "$@"
+	chmod +x "$@"
+	sed '0,/AI\x02/{s|AI\x02|\x00\x00\x00|}' -i $@
+
 build/python3.9.7.AppImage:
 	mkdir build || true
-	wget https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.7-cp39-cp39-manylinux1_x86_64.AppImage -O "$@"
+	wget https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.13-cp39-cp39-manylinux2014_$(shell uname -m).AppImage -O "$@"
 	chmod +x "$@"
+	sed '0,/AI\x02/{s|AI\x02|\x00\x00\x00|}' -i $@
 
 build/appdir: build/python3.9.7.AppImage
 	$< --appimage-extract
 	mv squashfs-root build/appdir
 
-dist/RuneKit.AppImage: dist/runekit.tar.gz build/appdir deploy/runekit-appimage.sh
+dist/RuneKit.AppImage: $(LINUXDEPLOY) dist/runekit.tar.gz build/appdir deploy/runekit-appimage.sh
 	build/appdir/usr/bin/python3 -m pip install dist/runekit.tar.gz
 	rm $(wildcard build/appdir/*.desktop) $(wildcard build/appdir/usr/share/applications/*.desktop) $(wildcard build/appdir/usr/share/metainfo/*)
 	cp deploy/RuneKit.desktop build/appdir/

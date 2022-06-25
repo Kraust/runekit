@@ -3,7 +3,7 @@ LINUXDEPLOY ?= build/linuxdeploy-$(shell uname -m).AppImage
 dev: runekit/_resources.py
 
 runekit/_resources.py: resources.qrc $(wildcard runekit/**/*.js) $(wildcard runekit/**/*.png)
-	pyside2-rcc $< -o $@
+	rcc --generator python $< -o $@
 
 # Sdist
 
